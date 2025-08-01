@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const subscriptionSchema = new mongoose.Schema({
-    name:{
+    name: {
         type: String,
         required: [true, 'Subscription name is required'],
         trim: true,
@@ -11,12 +11,12 @@ const subscriptionSchema = new mongoose.Schema({
     price: {
         type: Number,
         required: [true, 'Subscription price is required'],
-        min: [0, 'Price must be greater than 0'],
+        min: [0, 'Price must be greater than 0']
     },
     currency: {
         type: String,
         enum: ['USD', 'EUR', 'GBP'],
-        default: 'USD',
+        default: 'USD'
     },
     frequency: {
         type: String,
@@ -35,7 +35,7 @@ const subscriptionSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['active', 'cancelled', 'expired'],
-        default: 'active',
+        default: 'active'
     },
     startDate: {
         type: Date,
@@ -51,20 +51,23 @@ const subscriptionSchema = new mongoose.Schema({
             validator: function (value) {
                 return value > this.startDate;
             },
-            message: 'Renewal date must be after start date',
+            message: 'Renewal date must be after the start date',
         }
     },
     user: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId, // this is saying that this user field will store a object id from a different collection (table)
         ref: 'User',
         required: true,
         index: true,
     }
-}, {timestamps: true});
+}, { timestamps: true });
 
-// this auto-calculates renewal date if date is missing
+
+// Auto-calculate renewal date if missing.
+//pre means that this function runs before the document is saved
+// we call next to proceed to the save operation
 subscriptionSchema.pre('save', function (next) {
-    if(!this.renewalDate) {
+    if(!this.renewalDate) { // if we do not provide a renewal date, we can create one
         const renewalPeriods = {
             daily: 1,
             weekly: 7,
@@ -76,8 +79,8 @@ subscriptionSchema.pre('save', function (next) {
         this.renewalDate.setDate(this.renewalDate.getDate() + renewalPeriods[this.frequency]);
     }
 
-    //auto complete the status if renewal date has passed
-    if(this.renewalDate < new Date()) {
+    // Auto-update the status if renewal date has passed
+    if (this.renewalDate < new Date()) {
         this.status = 'expired';
     }
 
@@ -87,4 +90,3 @@ subscriptionSchema.pre('save', function (next) {
 const Subscription = mongoose.model('Subscription', subscriptionSchema);
 
 export default Subscription;
-

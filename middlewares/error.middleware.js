@@ -25,6 +25,8 @@ const errorMiddleware = (err, req, res, next) => {
             error.statusCode = 400;
         }
 
+        // when ever we pass an next(error) from a try catch block and the error name/code doesn't match it goes here
+        // if we have a status code we pass it else it defaults to 500. Nontheless, we send the error message else we default again.
         res.status(error.statusCode || 500).json({success: false, error: error.message || 'Server Error'});
     } catch (error) {
         next(error);
